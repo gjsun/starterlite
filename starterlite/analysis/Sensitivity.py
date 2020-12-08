@@ -437,54 +437,6 @@ class Sensitivity(object):
             raise ValueError('Dimension (either 2D or 3D) of survey geometry does not match!')
 
 
-    def get_kgrid_ciilae(self, z, z_l, z_h, return_full=False):
-        """
-        Return k grid for [CII]-LAE cross correlation
-        ----------------------------------------
-        :param z: redshift of target signal, for determination of which sub-band the signal belongs to; {scalar}
-        :return: kx, ky, kz (and optionally comoving sizes of survey volume lx, ly, lz); {tuple}
-        """
-
-        # First, make sure the signal(s) indeed falls into TIME's bandpass
-        if not all(c/self.wv_signal/(1.+z) > self.nu1_LF) and all(c/self.wv_signal/(1.+z) < self.nu2_HF):
-            raise ValueError('At least 1 line of rest-frame wavelength in %s cm from z=%.1f outside TIME bandpass!'%(self.wv_signal,z))
-
-        ndim = sum(self.survey_goemetry > 1)
-
-        _lx = np.round(self.area_beam_HF ** 0.5, 4) * self.n_ch_x
-        _ly = np.round(self.area_beam_HF ** 0.5, 4) * self.n_ch_y
-        _lz = self.cosm.ComovingRadialDistance(z_l, z_h) / cm_per_mpc * self.cosm.h70
-
-        if ndim == 1:
-            _dx = _lx / self.n_ch_x
-
-            nx_sim = self.n_ch_x
-
-            _kx = 2 * np.pi * np.fft.fftfreq(nx_sim, _dx)
-            _kx = np.roll(_kx, -nx_sim/2 - nx_sim%2, axis=0)
-
-            if return_full:
-                return _kx, _lx, _ly, _lz
-            else:
-                return _kx
-        else:
-            _dx = _lx / self.n_ch_x
-            _dy = _ly / self.n_ch_y
-
-            nx_sim = self.n_ch_x
-            ny_sim = self.n_ch_y
-
-            _kx = 2 * np.pi * np.fft.fftfreq(nx_sim, _dx)
-            _kx = np.roll(_kx, -nx_sim/2 - nx_sim%2, axis=0)
-            _ky = 2 * np.pi * np.fft.fftfreq(ny_sim, _dy)
-            _ky = np.roll(_ky, -ny_sim/2 - ny_sim%2, axis=0)
-
-            if return_full:
-                return _kx, _ky, _lx, _ly, _lz
-            else:
-                return _kx, _ky
-
-
     def get_Nmodes_3D_custom(self, kx_HF, ky_HF, kz_HF, k3d_binctr, zapping=False):
         """
         Number counts of Fourier modes for a 3D (kx, ky, kz) grid and user-specified |k| bin centers

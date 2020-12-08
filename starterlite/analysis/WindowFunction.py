@@ -14,8 +14,7 @@ Instructions
 The WindowFunction module serves to provide essential routines to compute the window function for user-specified survey
 geometries, in the form of interpolated, callable functions or transfer matrices (must supply a binning scheme)
 
-* Acknowledgements
-Thanks Bade Uzgil for pioneering the development of this part.
+Thanks to Bade Uzgil for pioneering the development of this part.
 
 """
 
@@ -112,34 +111,58 @@ class WindowFunction(Sensitivity):
         return ans
 
 
-    def RunAnalyticalWF(self, L_x, L_y, L_z):
-
-        # set up the k-space array for binning power spectra
-        nbins = 96
+    def RunAnalyticalWF(self, L_x, L_y, L_z, finekbins=True):
+        """
+        Compute the complete
+        ----------------------------------------
+        :param L_x: length of survey volume along 1st dimension; {scalar}
+        :param L_y: length of survey volume along 2nd dimension; {scalar}
+        :param L_z: length of survey volume along 3rd (LOS) dimension; {scalar}
+        :param finekbins: whether or not to use fine binning for sky modes k
+        :return:
+        """
 
         inst_mode_min = min((2. * np.pi / L_x), (2. * np.pi / L_z))
         inst_mode_max = np.sqrt((self.n_beam * np.pi / L_x)**2 + (self.n_channel * np.pi / L_z)**2)
 
-        dlogk = (np.log10(inst_mode_max) - np.log10(inst_mode_min)) / nbins
+        # set up the k-space array for binning power spectra
+        if finekbins:
+            nbins = 96
+            dlogk = (np.log10(inst_mode_max) - np.log10(inst_mode_min)) / nbins
 
-        logkrange = np.zeros(nbins, float)
+            logkrange = np.zeros(nbins, float)
+            for q in range(0, nbins):
+                logkrange[q] = np.log10(inst_mode_min) + q * dlogk
 
-        for q in range(0, nbins):
-            logkrange[q] = np.log10(inst_mode_min) + q * dlogk
+            krange = 10.**logkrange
 
-        krange = 10. ** logkrange
+            krange_extra1 = 10. ** (logkrange[len(krange) - 1] + dlogk)
+            krange_extra2 = 10. ** (logkrange[len(krange) - 1] + (2. * dlogk))
+            krange_extra3 = 10. ** (logkrange[len(krange) - 1] + (3. * dlogk))
+            krange_extra4 = 10. ** (logkrange[len(krange) - 1] + (4. * dlogk))
+            krange_extra5 = 10. ** (logkrange[len(krange) - 1] + (5. * dlogk))
 
-        krange_extra1 = 10. ** (logkrange[len(krange) - 1] + dlogk)
-        krange_extra2 = 10. ** (logkrange[len(krange) - 1] + (2. * dlogk))
-        krange_extra3 = 10. ** (logkrange[len(krange) - 1] + (3. * dlogk))
-        krange_extra4 = 10. ** (logkrange[len(krange) - 1] + (4. * dlogk))
-        krange_extra5 = 10. ** (logkrange[len(krange) - 1] + (5. * dlogk))
+            krange = np.append(krange, [krange_extra1, krange_extra2, krange_extra3, krange_extra4, krange_extra5])
+        else:
+            nbins = 19
+            dlogk = (np.log10(inst_mode_max) - np.log10(inst_mode_min)) / nbins
 
-        krange = np.append(krange, [krange_extra1, krange_extra2, krange_extra3, krange_extra4, krange_extra5])
+            logkrange = np.zeros(nbins, float)
+            for q in range(0, nbins):
+                logkrange[q] = np.log10(inst_mode_min) + q * dlogk
+
+            krange = 10.**logkrange
+
+            krange_extra1 = 10. ** (logkrange[len(krange) - 1] + dlogk)
+            krange_extra2 = 10. ** (logkrange[len(krange) - 1] + (2. * dlogk))
+            krange_extra3 = 10. ** (logkrange[len(krange) - 1] + (3. * dlogk))
+            krange_extra4 = 10. ** (logkrange[len(krange) - 1] + (4. * dlogk))
+            krange_extra5 = 10. ** (logkrange[len(krange) - 1] + (5. * dlogk))
+
+            krange = np.append(krange, [krange_extra1, krange_extra2, krange_extra3, krange_extra4, krange_extra5])
 
         k_anal = (krange[0:-1] + krange[1::]) / 2.
-
-        nshell = len(krange) - 1  # 100
+        nshell = len(krange) - 1  # 20 or 100 (if finekbins)
 
         # ----- compute 2D K grid for TIME ----- #
         kx_2d = 2 * np.pi * np.fft.fftfreq(self.n_beam, L_x / self.n_beam)
