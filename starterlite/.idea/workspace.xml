@@ -48,7 +48,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="FourierSpace.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="FourierSpace.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/simulation/FourierSpace.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="326">
@@ -60,14 +60,12 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Sensitivity.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Sensitivity.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/analysis/Sensitivity.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5140">
-              <caret line="436" column="94" lean-forward="false" selection-start-line="436" selection-start-column="94" selection-end-line="436" selection-end-column="94" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="90">
+              <caret line="6" column="45" lean-forward="false" selection-start-line="6" selection-start-column="45" selection-end-line="6" selection-end-column="45" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -78,9 +76,9 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/analysis/WindowFunction.py" />
-        <option value="$PROJECT_DIR$/analysis/Sensitivity.py" />
         <option value="$PROJECT_DIR$/simulation/GRF.py" />
         <option value="$PROJECT_DIR$/simulation/FourierSpace.py" />
+        <option value="$PROJECT_DIR$/analysis/Sensitivity.py" />
       </list>
     </option>
   </component>
@@ -467,16 +465,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/analysis/Sensitivity.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5140">
-          <caret line="436" column="94" lean-forward="false" selection-start-line="436" selection-start-column="94" selection-end-line="436" selection-end-column="94" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/simulation/GRF.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2679">
@@ -504,6 +492,14 @@
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/analysis/Sensitivity.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="6" column="45" lean-forward="false" selection-start-line="6" selection-start-column="45" selection-end-line="6" selection-end-column="45" />
+          <folding />
         </state>
       </provider>
     </entry>
