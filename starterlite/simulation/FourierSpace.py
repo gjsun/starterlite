@@ -50,7 +50,7 @@ class FourierSpace(object):
             raise NotImplementedError('Only 2d and 3d real spaces are supported!')
 
 
-    def RealToAPS(self, f, x, y, z=None):
+    def RealToAutoPS(self, f, x, y, z=None):
         """
         Return the power spectrum (that describes the fluctuations) of a real-space function
         ----------------------------------------
@@ -76,7 +76,7 @@ class FourierSpace(object):
             raise NotImplementedError('Only 2d and 3d real spaces are supported!')
 
 
-    def RealToCPS(self, f1, f2, x, y, z=None):
+    def RealToCrossPS(self, f1, f2, x, y, z=None):
         """
         Return the power spectrum (that describes the fluctuations) of a real-space function
         ----------------------------------------
@@ -117,14 +117,28 @@ class FourierSpace(object):
         """
         if z is None:
             rmin = 0.
-            # rmax = max(np.amax(np.abs(x)), np.amax(np.abs(y)))
-            rmax = np.sqrt(np.amax(np.abs(x))**2 + np.amax(np.abs(y))**2)
+            rmax = max(np.amax(np.abs(x)), np.amax(np.abs(y)))
             if bins == None:
-                dr = max([np.min(np.abs(q[q != 0])) for q in (x, y)])  # Smallest nonzero, absolute x,y coordinate value
+                dr = max(
+                    [np.min(np.abs(q[q != 0])) for q in (x, y)])  # Smallest nonzero, absolute x,y,z coordinate value
                 bins = int(np.ceil((rmax - rmin) / dr))
-                rsphbins = np.linspace(0, bins * dr, bins + 1)
+                if log:
+                    _rmin = min(np.min(np.abs(x)), np.min(np.abs(y)))
+                    if _rmin == 0.:
+                        _rmin = min(np.partition(np.abs(x), 2)[1], np.partition(np.abs(y), 2)[1])
+                        _rmin = _rmin / 1.01
+                    rsphbins = np.logspace(np.log10(_rmin), np.log10(bins * dr), bins + 1)
+                else:
+                    rsphbins = np.linspace(0, bins * dr, bins + 1)
             else:
-                rsphbins = np.linspace(rmin, rmax, bins + 1)
+                if log:
+                    _rmin = min(np.min(np.abs(x)), np.min(np.abs(y)))
+                    if _rmin == 0.:
+                        _rmin = min(np.partition(np.abs(x), 2)[1], np.partition(np.abs(y), 2)[1])
+                        _rmin = _rmin / 1.01
+                    rsphbins = np.logspace(np.log10(_rmin), np.log10(rmax), bins + 1)
+                else:
+                    rsphbins = np.linspace(rmin, rmax, bins + 1)
         else:
             rmin = 0.
             # rmax = max(np.amax(np.abs(x)), np.amax(np.abs(y)))
@@ -153,7 +167,7 @@ class FourierSpace(object):
         return rsphbins
 
 
-    def AverageAPS(self, f, x, y, z, bins=None, log=False, avg_type='sph'):
+    def AverageAutoPS(self, f, x, y, z, bins=None, log=False, avg_type='sph'):
         """
         Return the averaged (as specified) auto power spectrum
         ----------------------------------------
@@ -165,23 +179,35 @@ class FourierSpace(object):
         :return:
         """
         if avg_type == 'sph':
-            pxyz, kx, ky, kz = self.RealToAPS(f, x, y, z)
-            #print 'kmax:', max(kx), max(ky), max(kz)
-            #print 'pxyz has shape:', pxyz.shape, pxyz.flatten()
-            ksphbins = self.CartesianToRadialBins(kx, ky, kz, bins=bins, log=log)
-            #print '\nksphbins: ', ksphbins
-            rr = np.sqrt(sum(kk**2 for kk in np.meshgrid(kx, ky, kz, indexing='ij')))  # 3d grid of r (distance from origin), note ORDER!
-            #print 'rr has shape:', rr.shape
-            gt0 = np.where(rr > 0)  # selection for r>0 (do not include origin)
-            # average within individual bins
-            psph = np.histogram(rr[gt0], bins=ksphbins, weights=pxyz[gt0])[0] / np.histogram(rr[gt0], bins=ksphbins)[0]
-            ksph = (ksphbins[0:-1] + ksphbins[1::])/2.
-            return ksph, psph
+            if np.ndim(f) == 2:
+                pxyz, kx, ky = self.RealToAutoPS(f, x, y)
+                ksphbins = self.CartesianToRadialBins(kx, ky, bins=bins, log=log)
+                # 3d grid of r (distance from origin), note ORDER!
+                rr = np.sqrt(sum(kk**2 for kk in np.meshgrid(kx, ky, indexing='ij')))
+                # selection for r>0 (do not include origin)
+                gt0 = np.where(rr > 0)
+                # average within individual bins
+                psph = np.histogram(rr[gt0], bins=ksphbins, weights=pxyz[gt0])[0] / np.histogram(rr[gt0], bins=ksphbins)[0]
+                ksph = (ksphbins[0:-1] + ksphbins[1::])/2.
+                return ksph, psph
+            elif np.ndim(f) == 3:
+                pxyz, kx, ky, kz = self.RealToAutoPS(f, x, y, z)
+                ksphbins = self.CartesianToRadialBins(kx, ky, kz, bins=bins, log=log)
+                # 3d grid of r (distance from origin), note ORDER!
+                rr = np.sqrt(sum(kk**2 for kk in np.meshgrid(kx, ky, kz, indexing='ij')))
+                # selection for r>0 (do not include origin)
+                gt0 = np.where(rr > 0)
+                # average within individual bins
+                psph = np.histogram(rr[gt0], bins=ksphbins, weights=pxyz[gt0])[0] / np.histogram(rr[gt0], bins=ksphbins)[0]
+                ksph = (ksphbins[0:-1] + ksphbins[1::])/2.
+                return ksph, psph
+            else:
+                raise NotImplementedError('help!')
         else:
-            raise NotImplementedError('oops!')
+            raise NotImplementedError('help!')
 
 
-    def AverageCPS(self, f1, f2, x, y, z, bins=None, log=False, avg_type='sph'):
+    def AverageCrossPS(self, f1, f2, x, y, z, bins=None, log=False, avg_type='sph'):
         """
         Return the averaged (as specified) cross power spectrum
         ----------------------------------------
@@ -194,14 +220,10 @@ class FourierSpace(object):
         :return:
         """
         if avg_type == 'sph':
-            pxyz, kx, ky, kz = self.RealToCPS(f1, f2, x, y, z)
-            #print 'kmax:', max(kx), max(ky), max(kz)
-            # print 'pxyz has shape:', pxyz.shape, pxyz.flatten()
+            pxyz, kx, ky, kz = self.RealToCrossPS(f1, f2, x, y, z)
             ksphbins = self.CartesianToRadialBins(kx, ky, kz, bins=bins, log=log)
-            #print '\nksphbins: ', ksphbins
             rr = np.sqrt(sum(kk ** 2 for kk in np.meshgrid(kx, ky, kz,
                                                            indexing='ij')))  # 3d grid of r (distance from origin), note ORDER!
-            # print 'rr has shape:', rr.shape
             gt0 = np.where(rr > 0)  # selection for r>0 (do not include origin)
             # average within individual bins
             psph = np.histogram(rr[gt0], bins=ksphbins, weights=pxyz[gt0])[0] / \
@@ -209,10 +231,11 @@ class FourierSpace(object):
             ksph = (ksphbins[0:-1] + ksphbins[1::]) / 2.
             return ksph, psph
         else:
-            raise NotImplementedError('oops!')
+            raise NotImplementedError('help!')
 
 
     # ----------------   helpers   ---------------- #
+
     def EvenlySpaced(self, a):
         """
         Determine whether an array is evenly spaced
@@ -221,3 +244,7 @@ class FourierSpace(object):
         :return: evenly spaced or not; {boolean}
         """
         return np.allclose((a[1:] - a[:-1]), (a[1] - a[0]))
+
+
+    def BinMidpoints(self, bin_edges):
+        return 0.5*(bin_edges[:-1] + bin_edges[1:])

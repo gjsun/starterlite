@@ -155,9 +155,9 @@ class GaussianRandomField(FourierSpace):
         _dy = _lslab_y / self.n_ch_y   # Mpc h^-1
         _dz = _lslab_z / self.n_ch_z   # Mpc h^-1
 
-        self.nx_sim = np.round(_lsim_x / _dx).astype(int)
-        self.ny_sim = np.round(_lsim_y / _dy).astype(int)
-        self.nz_sim = np.round(_lsim_z / _dz).astype(int)
+        self.nx_sim = int(np.round(_lsim_x / _dx))
+        self.ny_sim = int(np.round(_lsim_y / _dy))
+        self.nz_sim = int(np.round(_lsim_z / _dz))
 
         self.xs = np.linspace(-self.nx_sim//2 + self.nx_sim%2, self.nx_sim//2 - 1 + self.nx_sim%2, self.nx_sim) * _dx
         self.ys = np.linspace(-self.ny_sim//2 + self.ny_sim%2, self.ny_sim//2 - 1 + self.ny_sim%2, self.ny_sim) * _dy
@@ -236,7 +236,7 @@ class GaussianRandomField(FourierSpace):
                 full_map = np.real(full_map)
 
                 survey_map = full_map[int(self.npix_cen-(self.n_ch_x//2)):int(self.npix_cen+(self.n_ch_x//2)), self.npix_cen, :]
-                self.survey_maps[:, :, :, i] = survey_map
+                self.survey_maps[:, 0, :, i] = survey_map
 
                 print('%d out of %d realizations completed!'%(i+1, n_samples))
 
@@ -249,7 +249,6 @@ class GaussianRandomField(FourierSpace):
         print('\n--- DONE ---\n')
 
 
-
     def save(self, format='npz'):
         """
         Save derived window functions to file
@@ -259,3 +258,22 @@ class GaussianRandomField(FourierSpace):
         _path = os.getenv('STARTERLITE') + '/output/grf/%s.%s' % (self.fn, format)
         _wf_dict = {'grf': self.survey_maps, 'coords': self.survey_map_coords}
         np.savez(_path, **_wf_dict)
+
+
+    def GetObsPS2D_NoAvg(self, ps3d, T_matrix_path):
+        """
+        Obtain the observed 2D PS for a given true, 3D PS and a projection (WF) matrix
+        ----------------------------------------
+        :param ps3d: true spatial power spectrum; {callable function}
+        :param T_matrix_path: path to transfer matrix; {str}
+        :return: observed power spectrum and bin edges
+        """
+
+        T_matrix_data = np.load(T_matrix_path)
+        T_matrix = T_matrix_data['T_matrix']  # of size (NKx * NKz, Nkbins)
+        k3d_bins = T_matrix_data['k3d_bins']
+        K2D_bins = T_matrix_data['K2D_matrix']  # of size (NKx * NKz, 2)
+
+        PS2D_from_mat = np.matmul(T_matrix, ps3d(k3d_bins))
+
+        return K2D_bins, PS2D_from_mat
